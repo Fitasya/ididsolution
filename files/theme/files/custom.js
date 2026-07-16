@@ -124,7 +124,7 @@ jQuery(function($) {
       if ($(".icons .wsite-search").is(":visible")) {
         var search = $(".icons .wsite-search").detach();
         $("#search .container").append(search);
-        $(".icons:last-child").prepend('<a href="#" class="wsite-search-button"></a>');
+        $(".icons:last-child").prepend('<a href="#" class="editable wsite-search-button"></a>');
         $(".icons .wsite-search-button").click(function(e){
           e.preventDefault();
           $("body").addClass("open");
@@ -211,7 +211,7 @@ jQuery(function($) {
         if ($(window).width() >= 768) {
           var menuID = $(this).attr("data-submenu"),
               menu = $("#"+menuID).clone(true, true);
-          $(this).parents(".nav").after('<div class="nav submenu slide-panel ' + menuID + '"><div class="container"></div></div>');
+          $(this).parents(".nav").after('<div class="editable nav submenu slide-panel ' + menuID + '"><div class="editable container"></div></div>');
           $('.'+menuID + " .container").append(menu);
           setTimeout(function(){ $('.'+menuID).addClass("active"); }, 300);
           $('.'+menuID).nextAll(".nav").slideUp(300, function(){

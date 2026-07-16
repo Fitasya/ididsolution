@@ -10,20 +10,8 @@ collections_config:
     path: /
     output: true
     url: /[slug].html
-_editables:
-  content:
-    html: true
-    text: true
-    image: true
-  elements:
-    - p
-    - h1
-    - h2
-    - h3
-    - h4
-    - h5
-    - h6
-    - img
-    - main
-    - div
-    - section
+editor:
+  default_view: visual
+  inputs:
+    text:
+      type: markdown

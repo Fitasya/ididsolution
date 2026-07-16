@@ -149,7 +149,7 @@ document.addEventListener("submit", function (event) {
   }
 });
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
   const path = window.location.pathname;
   const filename = path.substring(path.lastIndexOf('/') + 1);
 
@@ -157,27 +157,84 @@ document.addEventListener("DOMContentLoaded", function () {
   const leftButton = document.getElementById("submitinfo");
   const rightForm = document.querySelector("#myarrow form:last-of-type");
 
-  // Matches either "customersgallery" OR "laptoprecond" followed by any optional digits
   const match = filename.match(/(customersgallery|laptoprecond|newlaptop)(\d*)\.html/);
 
   if (match) {
-    const baseName = match[1]; // e.g., "customersgallery" or "laptoprecond"
+    const baseName = match[1]; // e.g., "customersgallery"
     const currentNumStr = match[2]; // e.g., "1", "2", or ""
 
+    // Fetch the highest existing page number dynamically
+    const highestNum = await findHighestNumberFast();
+
     if (currentNumStr === "") {
+      // Unnumbered page is the first page
+      // Inverted logic: Left (Prev) is disabled, Right (Next) goes to the highest number
       leftButton.disabled = true;
       leftForm.removeAttribute("action");
-      rightForm.setAttribute("action", `${baseName}2.html`);
+      
+      if (highestNum > 0) {
+        rightForm.setAttribute("action", `${baseName}${highestNum}.html`);
+      } else {
+        rightForm.setAttribute("action", "#");
+      }
     } else {
       const currentNum = parseInt(currentNumStr, 10);
       leftButton.disabled = false;
-      if (currentNum === 1) {
-        leftForm.setAttribute("action", `${baseName}.html`);
+
+      // Previous page: Add 1 to current number
+      // If it exceeds the highest number, disable it or point to a safe boundary
+      if (currentNum >= highestNum) {
+        leftForm.setAttribute("action", `${baseName}${highestNum}.html`); 
       } else {
-        leftForm.setAttribute("action", `${baseName}${currentNum - 1}.html`);
+        leftForm.setAttribute("action", `${baseName}${currentNum + 1}.html`);
       }
 
-      rightForm.setAttribute("action", `${baseName}${currentNum + 1}.html`);
+      // Next page: Minus 1 from current number
+      // If it reaches 1, the next step backward is the unnumbered base page
+      if (currentNum === 1) {
+        rightForm.setAttribute("action", `${baseName}.html`);
+      } else if (currentNum > 1) {
+        rightForm.setAttribute("action", `${baseName}${currentNum - 1}.html`);
+      }
     }
   }
 });
+
+async function checkBatch(start, batchSize) {
+    const promises = [];
+    for (let i = 0; i < batchSize; i++) {
+        const num = start + i;
+        promises.push(
+            fetch(`customersgallery${num}.html`, { method: 'HEAD' })
+                .then(res => ({ num, ok: res.ok }))
+                .catch(() => ({ num, ok: false }))
+        );
+    }
+    return Promise.all(promises);
+}
+
+async function findHighestNumberFast() {
+    let currentStart = 1;
+    let batchSize = 20; 
+    let highestNum = 0;
+    let keepChecking = true;
+
+    while (keepChecking) {
+        const results = await checkBatch(currentStart, batchSize);
+        
+        const successful = results.filter(r => r.ok).map(r => r.num);
+        
+        if (successful.length > 0) {
+            highestNum = Math.max(...successful);
+        }
+        
+        if (successful.length < batchSize) {
+            keepChecking = false;
+        } else {
+            currentStart += batchSize; 
+        }
+    }
+
+    console.log('Highest number found:', highestNum);
+    return highestNum;
+}
